@@ -374,7 +374,7 @@ SCSP_INT scsp_parse_lowlevel(
                 }
                 break;
             case '_':
-                // no tag support, just skipping them
+                CALLBACK(tag, number);
                 push_to_stack = 'N';
                 break;
             case '.':

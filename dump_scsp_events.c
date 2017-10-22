@@ -82,6 +82,10 @@ SCSP_INT q_simple_other (SCSP_USERDATA userdata, SCSP_INT value) {
     printf("simple_other(%ld)\n", value); fflush(stdout);
     return 0;
 }
+SCSP_INT q_tag (SCSP_USERDATA userdata, SCSP_INT value) {
+    printf("tag(%ld)\n", value); fflush(stdout);
+    return 0;
+}
 SCSP_INT q_noninteger (SCSP_USERDATA userdata, double value) {
     printf("noninteger(%lg)\n", value); fflush(stdout);
     return 0;
@@ -104,6 +108,7 @@ struct scsp_callbacks q_callbacks = {
     &q_map_closed,
     &q_simple,
     &q_simple_other,
+    &q_tag,
     &q_noninteger
 };
 

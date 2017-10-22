@@ -18,7 +18,6 @@ License = MIT or Apache 2.0
 * Not validating. Bytestrings and strings are handled similarly.
 * Strings and bytestrings are delivered in chunks which depend on how you push the data to the parser. String chunks may split UTF-8 characters in pieces.
 * There is no CBOR generator here, only parser
-* Tags are ignored
 * Not entire "Appenfix A" testsuite passes due to forced signed numbers
 
 ## Examples

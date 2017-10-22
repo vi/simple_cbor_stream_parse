@@ -111,6 +111,7 @@ struct scsp_callbacks q_callbacks = {
     &q_map_closed,
     &q_simple,
     &q_simple_other,
+    NULL,
     &q_noninteger
 };
 

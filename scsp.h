@@ -85,6 +85,7 @@ struct scsp_callbacks {
     // 'T' - true, 'F' - false, 'N' - null, 'U' - undefined
     SCSP_INT (*simple) (SCSP_USERDATA userdata, char value);
     SCSP_INT (*simple_other) (SCSP_USERDATA userdata, SCSP_INT value);
+    SCSP_INT (*tag) (SCSP_USERDATA userdata, SCSP_INT value);
 #if SCSP_ENABLE_FLOAT
     SCSP_INT (*noninteger) (SCSP_USERDATA userdata, double value);
 #endif
