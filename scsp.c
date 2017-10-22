@@ -57,6 +57,7 @@ SCSP_SYSINT scsp_parse(
     struct scsp_stack_entry* se1 = NULL;
     if (state->cur_depth > 0) {
         se1 = &state->stack[state->cur_depth - 1];
+        SCSP_DEBUG("se1->type=%c se1->remaining=%ld\n", se1->type, se1->remaining);
     }
     
     if (count < 1) return 0;
@@ -181,7 +182,7 @@ SCSP_SYSINT scsp_parse(
                 return -1;
             } else
             if (se1->remaining > 0) {
-                if ( (se->remaining & 1) == 0) {
+                if ( (se1->remaining & 1) == 0) {
                     CALLBACK0(map_key);
                 } else {
                     CALLBACK0(map_value);
