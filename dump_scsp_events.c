@@ -5,92 +5,85 @@
 #include <errno.h>
 #include "scsp.h"
 
-static int just_opened;
 
 SCSP_INT q_integer (SCSP_USERDATA userdata, SCSP_INT value) {
-    printf("%ld", value);
+    printf("integer(%ld)\n", value); fflush(stdout);
     return 0;
 }
 SCSP_INT q_bytestring_open (SCSP_USERDATA userdata, SCSP_INT size_or_minus_one) {
-    printf("h'");
+    printf("bytestring_open(%ld)\n", size_or_minus_one); fflush(stdout);
     return 0;
 }
 SCSP_INT q_bytestring_chunk (SCSP_USERDATA userdata, const uint8_t* buf, size_t len) {
     int i;
+    printf("bytestring_chunk(\"");
     for (i=0; i<len; ++i) {
-        printf("%02X", (int)buf[i]);
+        printf("\\x%02X", (int)buf[i]);
     }
+    printf("\")\n");
+    fflush(stdout);
     return 0;
 }
 SCSP_INT q_bytestring_close (SCSP_USERDATA userdata) {
-    printf("'");
+    printf("bytestring_close\n"); fflush(stdout);
     return 0;
 }
 SCSP_INT q_string_open (SCSP_USERDATA userdata, SCSP_INT size_or_minus_one) {
-    printf("\"");
+    printf("string_open(%ld)\n", size_or_minus_one); fflush(stdout);
     return 0;
 }
 SCSP_INT q_string_chunk (SCSP_USERDATA userdata, const uint8_t* buf, size_t len) {
-    fwrite(buf, 1, len, stdout);
+    int i;
+    printf("string_chunk(\"");
+    for (i=0; i<len; ++i) {
+        printf("\\x%02X", (int)buf[i]);
+    }
+    printf("\")\n");
+    fflush(stdout);
     return 0;
 }
 SCSP_INT q_string_close (SCSP_USERDATA userdata) {
-    printf("\"");
+    printf("string_close\n"); fflush(stdout);
     return 0;
 }
 SCSP_INT q_array_opened (SCSP_USERDATA userdata, SCSP_INT size_or_minus_one) {
-    printf("[");
-    just_opened = 1;
+    printf("array_opened(%ld)\n", size_or_minus_one); fflush(stdout);
     return 0;
 }
 SCSP_INT q_array_item (SCSP_USERDATA userdata) {
-    if (!just_opened) {
-        printf(", ");
-    }
-    just_opened = 0;
+    printf("array_item\n"); fflush(stdout);
     return 0;
 }
 SCSP_INT q_array_closed (SCSP_USERDATA userdata) {
-    printf("]");
+    printf("array_closed\n"); fflush(stdout);
     return 0;
 }
 SCSP_INT q_map_opened (SCSP_USERDATA userdata, SCSP_INT size_or_minus_one) {
-    printf("{");
-    just_opened = 1;
+    printf("map_opened(%ld)\n", size_or_minus_one); fflush(stdout);
     return 0;
 }
 SCSP_INT q_map_key (SCSP_USERDATA userdata) {
-    if (!just_opened) {
-        printf(", ");
-    }
-    just_opened = 0;
+    printf("map_key\n"); fflush(stdout);
     return 0;
 }
 SCSP_INT q_map_value (SCSP_USERDATA userdata) {
-    printf(": ");
+    printf("map_value\n"); fflush(stdout);
     return 0;
 }
 SCSP_INT q_map_closed (SCSP_USERDATA userdata) {
-    printf("}");
+    printf("map_closed\n"); fflush(stdout);
     return 0;
 }
 SCSP_INT q_simple (SCSP_USERDATA userdata, char value) {
-    switch (value) {
-        case 'T': printf("true"); break;    
-        case 'F': printf("false"); break;    
-        case 'N': printf("null"); break;    
-        case 'U': printf("undefined"); break;    
-        case '?': printf("???"); break;    
-        default: printf("error");
-    }
+    printf("simple(%c)\n", value); fflush(stdout);
     return 0;
 }
 SCSP_INT q_simple_other (SCSP_USERDATA userdata, SCSP_INT value) {
-    printf("simple(%ld)", value);
+    printf("simple_other(%ld)\n", value); fflush(stdout);
     return 0;
 }
 SCSP_INT q_noninteger (SCSP_USERDATA userdata, double value) {
-    printf("%lg", value);
+    printf("noninteger(%lg)\n", value); fflush(stdout);
     return 0;
 }
 
@@ -117,7 +110,7 @@ struct scsp_callbacks q_callbacks = {
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
-        printf("Usage: cbor_to_jsonesque {filename|-}\n");
+        printf("Usage: dump_scsp_events {filename|-}\n");
         return 1;
     }
     int f;
@@ -131,13 +124,10 @@ int main(int argc, char* argv[]) {
         }
     }
     
-    just_opened = 0;
-    
     if ( -1 == scsp_parse_from_fd(f, &q_callbacks, NULL) ) {
         fprintf(stderr, "Error reading CBOR\n");
         return 4;
     }
     
-    printf("\n");
     return 0;
 }

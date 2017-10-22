@@ -2,6 +2,25 @@
 
 #include "scsp.h"
 
+/* 
+types:
+
+'1' - integer
+'-' - negative integer
+'b' - byte string
+'B' - byte string streamed
+'s' - UTF-8 string
+'S' - UTF-8 string streamed
+'[' - array
+']' - array streamed
+'{' - map
+'}' - map streamed
+'_' - tag
+'.' - others
+'!' - break
+
+*/
+
 #if SCSP_ENABLE_HELPERS
     #include <unistd.h>
     #include <string.h>
@@ -46,7 +65,7 @@ SCSP_INT static scsp_closeelements(
                 SCSP_USERDATA userdata);
 
 
-SCSP_INT scsp_parse(
+SCSP_INT scsp_parse_lowlevel(
             struct scsp_state* state, 
             struct scsp_callbacks* callbacks,
             SCSP_USERDATA userdata,
@@ -555,7 +574,7 @@ SCSP_INT SCSP_EXPORT scsp_parse_from_fd(
         
         size_t write_cursor = 0;
         while(write_cursor < len) {
-            int ret2 = scsp_parse(&ss, callbacks, NULL, buf+write_cursor, len-write_cursor);
+            int ret2 = scsp_parse_lowlevel(&ss, callbacks, userdata, buf+write_cursor, len-write_cursor);
             if (ret2 == -1) {
                 return -1;
             }
@@ -571,6 +590,8 @@ SCSP_INT SCSP_EXPORT scsp_parse_from_fd(
     return read_cursor;
 }
 
+#endif // SCSP_ENABLE_HELPERS
+
 SCSP_INT SCSP_EXPORT scsp_parse_from_memory(
             const void *buffer,
             size_t count,
@@ -584,7 +605,7 @@ SCSP_INT SCSP_EXPORT scsp_parse_from_memory(
     
     size_t write_cursor = 0;
     while(write_cursor < count) {
-        int ret2 = scsp_parse(&ss, callbacks, NULL, buf+write_cursor, count-write_cursor);
+        int ret2 = scsp_parse_lowlevel(&ss, callbacks, userdata, buf+write_cursor, count-write_cursor);
         if (ret2 == -1) {
             return -1;
         }
@@ -597,4 +618,3 @@ SCSP_INT SCSP_EXPORT scsp_parse_from_memory(
     return count - write_cursor;
 }
 
-#endif // SCSP_ENABLE_HELPERS

@@ -51,24 +51,6 @@
 #define SCSP_ENABLE_HELPERS 1
 #endif
 
-/* 
-types:
-
-'1' - integer
-'-' - negative integer
-'b' - byte string
-'B' - byte string streamed
-'s' - UTF-8 string
-'S' - UTF-8 string streamed
-'[' - array
-']' - array streamed
-'{' - map
-'}' - map streamed
-'_' - tag
-'.' - others
-'!' - break
-
-*/
 
 struct scsp_stack_entry {
     char type;
@@ -108,23 +90,6 @@ struct scsp_callbacks {
 #endif
 };
 
-/*
- * Low-level parse function. Call in in a loop.
- * 
- * Returns number of processed bytes, which is likely less than suppied.
- * Returns 0 if there is too little data to be parsed. Expects buffering to be done by caller.
- * Returns -1 on error, including on error returned from callbacks.
- * Does not set errno.
- * 
- * Memset scsp_state to 0 before first use or to reset the parser
- */
-SCSP_INT SCSP_EXPORT scsp_parse(
-            struct scsp_state* state, 
-            struct scsp_callbacks* callbacks,
-            SCSP_USERDATA userdata,
-            const void* buf,
-            size_t count);
-
 /* Syncronously read from a FD to end, with buffering, and call callbacks along the way
  * Returns number of trailing unpased bytes; or -1 on error.
  */
@@ -139,5 +104,23 @@ SCSP_INT SCSP_EXPORT scsp_parse_from_memory(
             size_t count,
             struct scsp_callbacks* callbacks,
             SCSP_USERDATA userdata);
+
+/*
+ * Low-level parse function. Call in in a loop.
+ * 
+ * Returns number of processed bytes, which is likely less than suppied.
+ * Returns 0 if there is too little data to be parsed. Expects buffering to be done by caller.
+ * Returns -1 on error, including on error returned from callbacks.
+ * Does not set errno.
+ * 
+ * Memset scsp_state to 0 before first use or to reset the parser
+ */
+SCSP_INT SCSP_EXPORT scsp_parse_lowlevel(
+            struct scsp_state* state, 
+            struct scsp_callbacks* callbacks,
+            SCSP_USERDATA userdata,
+            const void* buf,
+            size_t count);
+
 #endif // _SCSP_H
 
