@@ -51,7 +51,7 @@ SCSP_INT q_bytestring_open (SCSP_USERDATA userdata, SCSP_INT size_or_minus_one) 
     printf("h'");
     return 0;
 }
-SCSP_INT q_bytestring_chunk (SCSP_USERDATA userdata, uint8_t* buf, size_t len) {
+SCSP_INT q_bytestring_chunk (SCSP_USERDATA userdata, const uint8_t* buf, size_t len) {
     int i;
     for (i=0; i<len; ++i) {
         printf("%02X", (int)buf[i]);
@@ -66,7 +66,7 @@ SCSP_INT q_string_open (SCSP_USERDATA userdata, SCSP_INT size_or_minus_one) {
     printf("\"");
     return 0;
 }
-SCSP_INT q_string_chunk (SCSP_USERDATA userdata, uint8_t* buf, size_t len) {
+SCSP_INT q_string_chunk (SCSP_USERDATA userdata, const uint8_t* buf, size_t len) {
     fwrite(buf, 1, len, stdout);
     return 0;
 }
@@ -94,7 +94,7 @@ SCSP_INT q_noninteger (SCSP_USERDATA userdata, double value) {
     return 0;
 }
 
-struct scsp_callbacks sc = {
+struct scsp_callbacks q_callbacks = {
     &q_integer,
     &q_bytestring_open,
     &q_bytestring_chunk,
@@ -116,7 +116,6 @@ struct scsp_callbacks sc = {
 
 
 int main(int argc, char* argv[]) {
-    uint8_t buf[9];
     if (argc != 2) {
         printf("Usage: cbor_to_jsonesque {filename|-}\n");
         return 1;
@@ -132,39 +131,13 @@ int main(int argc, char* argv[]) {
         }
     }
     
-    struct scsp_state     ss;
     just_opened = 0;
     
-    size_t read_cursor = 0;
-    for(;;) {
-        size_t len = read(f, buf+read_cursor, (sizeof buf) - read_cursor);
-        if (len == -1) {
-            if (errno == EINTR) continue;
-            if (errno == EAGAIN) { usleep(100000); continue; }
-            perror("read");
-            return 4;
-        }
-        if (len == 0) break;
-        
-        len += read_cursor;
-        read_cursor=0;
-        
-        size_t write_cursor = 0;
-        while(write_cursor < len) {
-            int ret2 = scsp_parse(&ss, &sc, NULL, buf+write_cursor, len-write_cursor);
-            if (ret2 == -1) {
-                fprintf(stderr, "Error parsing CBOR\n");
-                return 3;
-            }
-            if (ret2 == 0) {
-                memmove(buf, buf+write_cursor, len-write_cursor);
-                read_cursor = len-write_cursor;
-                break;
-            }
-            write_cursor += ret2;
-        }
-        fflush(stdout);
+    if ( -1 == scsp_parse_from_fd(f, &q_callbacks, NULL) ) {
+        fprintf(stderr, "Error reading CBOR\n");
+        return 4;
     }
+    
     printf("\n");
     return 0;
 }

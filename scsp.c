@@ -2,12 +2,18 @@
 
 #include "scsp.h"
 
+#if SCSP_ENABLE_HELPERS
+    #include <unistd.h>
+    #include <string.h>
+    #include <errno.h>
+#endif
 
 
 #ifdef SCSP_ENABLE_FLOAT
+    // snippet from RFC 7049
    #include <math.h>
 
-   static double decode_half(unsigned char *halfp) {
+   static double decode_half(const unsigned char *halfp) {
      int half = (halfp[0] << 8) + halfp[1];
      int exp = (half >> 10) & 0x1f;
      int mant = half & 0x3ff;
@@ -63,7 +69,7 @@ SCSP_INT scsp_parse(
     
     SCSP_INT ret = -2;
     
-    uint8_t*b = (uint8_t*)buf;
+    const uint8_t*b = (const uint8_t*)buf;
     
     if (se1 && (se1->type == 's' || se1->type == 'b')) {
         if (se1->remaining <= 0) {
@@ -369,15 +375,20 @@ SCSP_INT scsp_parse(
                     }
                     case 26: {
                         uint32_t y = (b[1] << 24) | (b[2] << 16) | (b[3] << 8) | b[4];
-                        double x = *(float*)(&y);
+                        double x = *(const float*)(&y);
                         CALLBACK(noninteger, x);
                         break;
                     }
                     case 27: {
 #if SCSP_ENABLE_64BIT
-                        uint64_t y = (((uint64_t)(b[1] << 24) | (b[2] << 16) | (b[3] << 8) | b[4]) << 32)
-                                      |          (b[1] << 24) | (b[2] << 16) | (b[3] << 8) | b[4];
-                        double x = *(double*)(&y);
+                        unsigned char i;
+                        uint64_t y = 0;
+                        for (i=1; i<9; ++i) {
+                            y <<= 8;
+                            y |= b[i];
+                        }
+                        
+                        double x = *(const double*)(&y);
                         CALLBACK(noninteger, x);
                         break;
 #else
@@ -519,4 +530,71 @@ SCSP_INT static scsp_closeelements(
     return 0;
 }
 
+#if SCSP_ENABLE_HELPERS
+SCSP_INT SCSP_EXPORT scsp_parse_from_fd(
+            int fd, 
+            struct scsp_callbacks* callbacks,
+            SCSP_USERDATA userdata)
+{
+    struct scsp_state     ss;
+    ss.cur_depth = 0;
+    uint8_t buf[8092];
+    
+    size_t read_cursor = 0;
+    for(;;) {
+        size_t len = read(fd, buf+read_cursor, (sizeof buf) - read_cursor);
+        if (len == -1) {
+            if (errno == EINTR) continue;
+            if (errno == EAGAIN) { usleep(100000); continue; }
+            return -1;
+        }
+        if (len == 0) break;
+        
+        len += read_cursor;
+        read_cursor=0;
+        
+        size_t write_cursor = 0;
+        while(write_cursor < len) {
+            int ret2 = scsp_parse(&ss, callbacks, NULL, buf+write_cursor, len-write_cursor);
+            if (ret2 == -1) {
+                return -1;
+            }
+            if (ret2 == 0) {
+                memmove(buf, buf+write_cursor, len-write_cursor);
+                read_cursor = len-write_cursor;
+                break;
+            }
+            write_cursor += ret2;
+        }
+        //fflush(stdout);
+    }
+    return read_cursor;
+}
 
+SCSP_INT SCSP_EXPORT scsp_parse_from_memory(
+            const void *buffer,
+            size_t count,
+            struct scsp_callbacks* callbacks,
+            SCSP_USERDATA userdata)
+{
+    struct scsp_state     ss;
+    ss.cur_depth = 0;
+    
+    const uint8_t *buf = (const uint8_t*)buffer;
+    
+    size_t write_cursor = 0;
+    while(write_cursor < count) {
+        int ret2 = scsp_parse(&ss, callbacks, NULL, buf+write_cursor, count-write_cursor);
+        if (ret2 == -1) {
+            return -1;
+        }
+        if (ret2 == 0) {
+            break;
+        }
+        write_cursor += ret2;
+    }
+    
+    return count - write_cursor;
+}
+
+#endif // SCSP_ENABLE_HELPERS

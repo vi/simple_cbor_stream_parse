@@ -46,6 +46,10 @@
 #ifndef SCSP_ENABLE_FLOAT
 #define SCSP_ENABLE_FLOAT 1
 #endif
+    
+#ifndef SCSP_ENABLE_HELPERS
+#define SCSP_ENABLE_HELPERS 1
+#endif
 
 /* 
 types:
@@ -80,11 +84,11 @@ struct scsp_callbacks {
     SCSP_INT (*integer) (SCSP_USERDATA userdata, SCSP_INT value);
     
     SCSP_INT (*bytestring_open) (SCSP_USERDATA userdata, SCSP_INT size_or_minus_one);
-    SCSP_INT (*bytestring_chunk) (SCSP_USERDATA userdata, uint8_t* buf, size_t len);
+    SCSP_INT (*bytestring_chunk) (SCSP_USERDATA userdata, const uint8_t* buf, size_t len);
     SCSP_INT (*bytestring_close) (SCSP_USERDATA userdata);
     
     SCSP_INT (*string_open)  (SCSP_USERDATA userdata, SCSP_INT size_or_minus_one);
-    SCSP_INT (*string_chunk) (SCSP_USERDATA userdata, uint8_t* buf, size_t len);
+    SCSP_INT (*string_chunk) (SCSP_USERDATA userdata, const uint8_t* buf, size_t len);
     SCSP_INT (*string_close) (SCSP_USERDATA userdata);
     
     SCSP_INT (*array_opened) (SCSP_USERDATA userdata, SCSP_INT size_or_minus_one);
@@ -105,9 +109,14 @@ struct scsp_callbacks {
 };
 
 /*
+ * Low-level parse function. Call in in a loop.
+ * 
+ * Returns number of processed bytes, which is likely less than suppied.
  * Returns 0 if there is too little data to be parsed. Expects buffering to be done by caller.
  * Returns -1 on error, including on error returned from callbacks.
  * Does not set errno.
+ * 
+ * Memset scsp_state to 0 before first use or to reset the parser
  */
 SCSP_INT SCSP_EXPORT scsp_parse(
             struct scsp_state* state, 
@@ -116,5 +125,19 @@ SCSP_INT SCSP_EXPORT scsp_parse(
             const void* buf,
             size_t count);
 
+/* Syncronously read from a FD to end, with buffering, and call callbacks along the way
+ * Returns number of trailing unpased bytes; or -1 on error.
+ */
+SCSP_INT SCSP_EXPORT scsp_parse_from_fd(
+            int fd, 
+            struct scsp_callbacks* callbacks,
+            SCSP_USERDATA userdata);
+
+/* Returns number of trailing unpased bytes; or -1 on error. */
+SCSP_INT SCSP_EXPORT scsp_parse_from_memory(
+            const void *buffer,
+            size_t count,
+            struct scsp_callbacks* callbacks,
+            SCSP_USERDATA userdata);
 #endif // _SCSP_H
 
