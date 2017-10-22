@@ -497,6 +497,7 @@ SCSP_SYSINT static scsp_closeelements(
                         break;
                     case 'S':
                         CALLBACK0(string_close);
+                        break;
                     case 'b':
                     case 's':
                         SCSP_DEBUG("interal error 5\n");

@@ -1,4 +1,8 @@
 #include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
 #include "scsp.h"
 
 static int just_opened;
@@ -112,19 +116,55 @@ struct scsp_callbacks sc = {
 
 
 int main(int argc, char* argv[]) {
-    uint8_t buf[1024];
-    FILE* f = fopen(argv[1], "r");
-    size_t ret = fread(buf, 1, 1024, f);
+    uint8_t buf[8192];
+    if (argc != 2) {
+        printf("Usage: cbor_to_jsonesque {filename|-}\n");
+        return 1;
+    }
+    int f;
+    if (argv[1][0] == '-' && argv[1][1] == '\0') {
+        f = 0;
+    } else {
+        f = open(argv[1], O_RDONLY);
+        if (f == -1) {
+            perror("open");
+            return 2;
+        }
+    }
     
     struct scsp_state     ss;
     just_opened = 0;
     
-    size_t cursor = 0;
-    while(cursor < ret) {
-        int ret2 = scsp_parse(&ss, &sc, NULL, buf+cursor, ret-cursor);
-        //fprintf(stderr, "ret2=%d\n", ret2);
-        if (ret2 == -1) break;
-        cursor += ret2;
+    size_t read_cursor = 0;
+    for(;;) {
+        size_t len = read(f, buf+read_cursor, (sizeof buf) - read_cursor);
+        if (len == -1) {
+            if (errno == EINTR) continue;
+            if (errno == EAGAIN) { usleep(100000); continue; }
+            perror("read");
+            return 4;
+        }
+        if (len == 0) break;
+        
+        len += read_cursor;
+        read_cursor=0;
+        
+        size_t write_cursor = 0;
+        while(write_cursor < len) {
+            int ret2 = scsp_parse(&ss, &sc, NULL, buf+write_cursor, len-write_cursor);
+            //fprintf(stderr, "ret2=%d\n", ret2);
+            if (ret2 == -1) {
+                fprintf(stderr, "Error parsing CBOR\n");
+                return 3;
+            }
+            if (ret2 == 0) {
+                memmove(buf, buf+write_cursor, len-write_cursor);
+                read_cursor = len-write_cursor;
+                break;
+            }
+            write_cursor += ret2;
+        }
+        fflush(stdout);
     }
     printf("\n");
     return 0;

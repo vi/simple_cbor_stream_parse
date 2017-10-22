@@ -1,3 +1,3 @@
-all: example
+all: cbor_to_jsonesque
 
-example: example.o scsp.o
+cbor_to_jsonesque: cbor_to_jsonesque.o scsp.o

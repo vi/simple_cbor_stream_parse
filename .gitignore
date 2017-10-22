@@ -1,3 +1,5 @@
-example
+cbor_to_jsonesque
+dump_scsp_events
+simple_example
 *.o
 *.cbor
