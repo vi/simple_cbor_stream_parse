@@ -4,8 +4,11 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define SCSP_DEBUG(x...) fprintf(stderr, x)
-#include <stdio.h>
+
+#ifdef SCSP_DEBUG_STDERR
+    #define SCSP_DEBUG(x...) fprintf(stderr, x)
+    #include <stdio.h>
+#endif
 
 #ifndef SCSP_SYSINT
 #define SCSP_SYSINT int64_t

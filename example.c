@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
     size_t cursor = 0;
     while(cursor < ret) {
         int ret2 = scsp_parse(&ss, &sc, NULL, buf+cursor, ret-cursor);
-        fprintf(stderr, "ret2=%d\n", ret2);
+        //fprintf(stderr, "ret2=%d\n", ret2);
         if (ret2 == -1) break;
         cursor += ret2;
     }
