@@ -1,3 +1,7 @@
+// A simple low-level streamed callback-based CBOR push parser in C.
+
+// Implemented by Vitaly "_Vi" Shukela in 2017; License = MIT or Apache 2.0
+
 #ifndef _SCSP_H
 #define _SCSP_H
 
@@ -96,7 +100,9 @@ struct scsp_callbacks {
     SCSP_SYSINT (*map_value) (SCSP_USERDATA userdata);
     SCSP_SYSINT (*map_closed) (SCSP_USERDATA userdata);
     
+    // 'T' - true, 'F' - false, 'N' - null, 'U' - undefined
     SCSP_SYSINT (*simple) (SCSP_USERDATA userdata, char value);
+    SCSP_SYSINT (*simple_other) (SCSP_USERDATA userdata, SCSP_DATAINT value);
 #if SCSP_ENABLE_FLOAT
     SCSP_SYSINT (*noninteger) (SCSP_USERDATA userdata, double value);
 #endif

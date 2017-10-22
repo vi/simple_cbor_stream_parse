@@ -1,4 +1,8 @@
+// Implemented by Vitaly "_Vi" Shukela in 2017; License = MIT or Apache 2.0
+
 #include "scsp.h"
+
+
 
 #ifdef SCSP_ENABLE_FLOAT
    #include <math.h>
@@ -88,10 +92,6 @@ SCSP_SYSINT scsp_parse(
             if (state->cur_depth > 0) {
                 
                 struct scsp_stack_entry* se2 = &state->stack[state->cur_depth - 1];
-                
-                if (-1 == scsp_closeelements(state, callbacks, userdata)) {
-                    return -1;
-                }
             
                 if (se2->type == 'B' || se2->type == 'S') {
                     // inhibit close events in this case
@@ -101,6 +101,10 @@ SCSP_SYSINT scsp_parse(
                     } else {
                         CALLBACK0(bytestring_close);
                     }
+                }
+                
+                if (-1 == scsp_closeelements(state, callbacks, userdata)) {
+                    return -1;
                 }
             } else {
                 if (se1->type == 's') {
@@ -244,7 +248,7 @@ SCSP_SYSINT scsp_parse(
         } else
         if (add==25) {
             if ((b[1]&0x80) && sizeof(SCSP_SYSINT)<=2) {
-                SCSP_DEBUG("length overflow 2\n"); 
+                SCSP_DEBUG("number overflow 16-bit\n"); 
                 return -1; 
             }
             number = (b[1] << 8) | b[2];
@@ -253,7 +257,7 @@ SCSP_SYSINT scsp_parse(
         if (add==26) {
 #if SCSP_ENABLE_32BIT
             if ((b[1]&0x80) && sizeof(SCSP_SYSINT)<=4) {
-                SCSP_DEBUG("length overflow 2\n"); 
+                SCSP_DEBUG("number overflow 32-bit\n"); 
                 return -1; 
             }
             number = (((b[1] << 8) | b[2]) << 16)   |   ((b[3] << 8) | b[4]);
@@ -266,11 +270,17 @@ SCSP_SYSINT scsp_parse(
         if (add==27) {
 #if SCSP_ENABLE_64BIT
             if ((b[1]&0x80) && sizeof(SCSP_SYSINT)<=8) {
-                SCSP_DEBUG("length overflow 2\n"); 
+                SCSP_DEBUG("number overflow 64-bit\n"); 
                 return -1; 
             }
-            number =   ((SCSP_DATAINT)((((b[1] << 8) | b[2]) << 16)   |   ((b[3] << 8) | b[4])) << 32)
-                     |                 (((b[1] << 8) | b[2]) << 16)   |   ((b[3] << 8) | b[4]);
+            number =  0;
+            
+            unsigned char i;
+            for (i=1; i<9; ++i) {
+                number <<= 8;
+                number |= b[i];
+            }
+            
             ret = 1+8;
 #else
             SCSP_DEBUG("64-bit numbers not enabled\n");
@@ -291,33 +301,57 @@ SCSP_SYSINT scsp_parse(
                 CALLBACK(integer, number);
                 push_to_stack = 'N';
                 break;
-            case 'b':
-                if (se1 && se1->type == 'B') {
-                    // no callback
-                } else {
+            case 'b': {
+                char inhibit_callback = se1 && se1->type == 'B';
+                if (!inhibit_callback) {
                     CALLBACK(bytestring_open, number);
                 }
-                push_to_stack = 'Y';
-                se->remaining = number;
-                break;
-            case 's':
-                if (se1 && se1->type == 'S') {
-                    // no callback
+                if (number == 0) {
+                    push_to_stack = 'N';
+                    if (!inhibit_callback) {
+                        CALLBACK0(bytestring_close);
+                    }
                 } else {
+                    push_to_stack = 'Y';
+                    se->remaining = number;
+                }
+                break;
+            }
+            case 's': {
+                char inhibit_callback = se1 && se1->type == 'S';
+                if (!inhibit_callback) {
                     CALLBACK(string_open, number);
                 }
-                push_to_stack = 'Y';
-                se->remaining = number;
+                if (number == 0) {
+                    push_to_stack = 'N';
+                    if (!inhibit_callback) {
+                        CALLBACK0(string_close);
+                    }
+                } else {
+                    push_to_stack = 'Y';
+                    se->remaining = number;
+                }
                 break;
+            }
             case '[':
-                push_to_stack = 'Y';
                 se->remaining = number;
                 CALLBACK(array_opened, number);
+                if (number == 0) {
+                    CALLBACK0(array_closed);
+                    push_to_stack = 'N';
+                } else {
+                    push_to_stack = 'Y';
+                }
                 break;
             case '{':
-                push_to_stack = 'Y';
                 se->remaining = number;
                 CALLBACK(map_opened, number);
+                if (number == 0) {
+                    CALLBACK0(map_closed);
+                    push_to_stack = 'N';
+                } else {
+                    push_to_stack = 'Y';
+                }
                 break;
             case '_':
                 // no tag support, just skipping them
@@ -330,7 +364,7 @@ SCSP_SYSINT scsp_parse(
                     case 22: CALLBACK(simple, 'N'); break;
                     case 23: CALLBACK(simple, 'U'); break;
                     case 24: {
-                        CALLBACK(simple, '?'); break;
+                        CALLBACK(simple_other, number); break;
                     }
 #if SCSP_ENABLE_FLOAT
                     case 25: {
@@ -345,19 +379,24 @@ SCSP_SYSINT scsp_parse(
                         break;
                     }
                     case 27: {
+#if SCSP_ENABLE_64BIT
                         uint64_t y = (((uint64_t)(b[1] << 24) | (b[2] << 16) | (b[3] << 8) | b[4]) << 32)
                                       |          (b[1] << 24) | (b[2] << 16) | (b[3] << 8) | b[4];
                         double x = *(double*)(&y);
                         CALLBACK(noninteger, x);
                         break;
-                    }
 #else
+                        SCSP_DEBUG("64-bit things, including floats, are disabled in conf\n");
+                        return -1;
+#endif
+                    }
+#else // ! SCSP_ENABLE_FLOAT
                     case 25:
                     case 26:
                     case 27:
                         SCSP_DEBUG("float not supported\n");
                         return -1;
-#endif
+#endif // SCSP_ENABLE_FLOAT
                     case 28:
                     case 29:
                     case 30: {
@@ -368,7 +407,7 @@ SCSP_SYSINT scsp_parse(
                         SCSP_DEBUG("internal err\n");
                         return -1;
                     }
-                    default: CALLBACK(simple, '?');
+                    default: CALLBACK(simple_other, number);
                 }
                 push_to_stack = 'N';
                 break;
