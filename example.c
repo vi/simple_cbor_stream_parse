@@ -30,7 +30,7 @@ SCSP_SYSINT q_map_value (SCSP_USERDATA userdata) {
     return 0;
 }
 SCSP_SYSINT q_integer (SCSP_USERDATA userdata, SCSP_DATAINT value) {
-    printf("%lld", value);
+    printf("%ld", value);
     return 0;
 }
 SCSP_SYSINT q_bytestring_open (SCSP_USERDATA userdata, SCSP_SYSINT size_or_minus_one) {
@@ -64,6 +64,10 @@ SCSP_SYSINT q_simple (SCSP_USERDATA userdata, char value) {
     printf("%c", value);
     return 0;
 }
+SCSP_SYSINT q_noninteger (SCSP_USERDATA userdata, double value) {
+    printf("%lf", value);
+    return 0;
+}
 
 struct scsp_callbacks sc = {
     &q_integer,
@@ -80,7 +84,8 @@ struct scsp_callbacks sc = {
     &q_map_key,
     &q_map_value,
     &q_map_closed,
-    &q_simple
+    &q_simple,
+    &q_noninteger
 };
 
 

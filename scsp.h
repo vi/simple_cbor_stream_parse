@@ -94,6 +94,9 @@ struct scsp_callbacks {
     SCSP_SYSINT (*map_closed) (SCSP_USERDATA userdata);
     
     SCSP_SYSINT (*simple) (SCSP_USERDATA userdata, char value);
+#if SCSP_ENABLE_FLOAT
+    SCSP_SYSINT (*noninteger) (SCSP_USERDATA userdata, double value);
+#endif
 };
 
 /*

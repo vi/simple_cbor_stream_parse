@@ -1,5 +1,21 @@
 #include "scsp.h"
 
+#ifdef SCSP_ENABLE_FLOAT
+   #include <math.h>
+
+   static double decode_half(unsigned char *halfp) {
+     int half = (halfp[0] << 8) + halfp[1];
+     int exp = (half >> 10) & 0x1f;
+     int mant = half & 0x3ff;
+     double val;
+     if (exp == 0) val = ldexp(mant, -24);
+     else if (exp != 31) val = ldexp(mant + 1024, exp - 25);
+     else val = mant == 0 ? INFINITY : NAN;
+     return half & 0x8000 ? -val : val;
+   }
+#endif
+
+
 #define CALLBACK(name, par...) \
     SCSP_DEBUG("callback: %s\n", #name); \
     if (callbacks->name) { \
@@ -100,7 +116,7 @@ SCSP_SYSINT scsp_parse(
     uint8_t maj = (b[0] & 0xE0) >> 5;
     uint8_t add = (b[0] & 0x1F) >> 0;
     
-    SCSP_DEBUG("maj=%d add=%d depth=%d\n", maj, add, state->cur_depth);
+    SCSP_DEBUG("maj=%d add=%d depth=%ld\n", maj, add, state->cur_depth);
     
     switch(maj) {
         case 0:
@@ -155,7 +171,7 @@ SCSP_SYSINT scsp_parse(
     char t = se->type;
     char push_to_stack = '?';
     
-    if (se1 && t != '!') {
+    if (se1 && t != '!' && t != '_') {
         if (se1->type == '['  || se1->type == ']') {
             CALLBACK0(array_item);
         } else
@@ -303,7 +319,7 @@ SCSP_SYSINT scsp_parse(
                 CALLBACK(map_opened, number);
                 break;
             case '_':
-                // TODO
+                // no tag support, just skipping them
                 push_to_stack = 'N';
                 break;
             case '.':
@@ -315,15 +331,32 @@ SCSP_SYSINT scsp_parse(
                     case 24: {
                         CALLBACK(simple, '?'); break;
                     }
+#if SCSP_ENABLE_FLOAT
                     case 25: {
-                        // TODO: float
+                        double x = decode_half(b+1);
+                        CALLBACK(noninteger, x);
+                        break;
                     }
                     case 26: {
-                        // TODO: float
+                        uint32_t y = (b[1] << 24) | (b[2] << 16) | (b[3] << 8) | b[4];
+                        double x = *(float*)(&y);
+                        CALLBACK(noninteger, x);
+                        break;
                     }
                     case 27: {
-                        // TODO: float
+                        uint64_t y = (((uint64_t)(b[1] << 24) | (b[2] << 16) | (b[3] << 8) | b[4]) << 32)
+                                      |          (b[1] << 24) | (b[2] << 16) | (b[3] << 8) | b[4];
+                        double x = *(double*)(&y);
+                        CALLBACK(noninteger, x);
+                        break;
                     }
+#else
+                    case 25:
+                    case 26:
+                    case 27:
+                        SCSP_DEBUG("float not supported\n");
+                        return -1;
+#endif
                     case 28:
                     case 29:
                     case 30: {
@@ -359,8 +392,10 @@ SCSP_SYSINT scsp_parse(
             se1->remaining = 1;
         }
         
-        if (-1 == scsp_closeelements(state, callbacks, userdata)) {
-            return -1;
+        if (t != '_') {
+            if (-1 == scsp_closeelements(state, callbacks, userdata)) {
+                return -1;
+            }
         }
     } else 
     if (push_to_stack == 'Y') {
