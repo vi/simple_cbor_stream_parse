@@ -34,26 +34,21 @@
             return -1; \
         } \
     }
-SCSP_SYSINT static scsp_closeelements(
+SCSP_INT static scsp_closeelements(
                 struct scsp_state* state, 
                 struct scsp_callbacks* callbacks,
                 SCSP_USERDATA userdata);
 
 
-SCSP_SYSINT scsp_parse(
+SCSP_INT scsp_parse(
             struct scsp_state* state, 
             struct scsp_callbacks* callbacks,
             SCSP_USERDATA userdata,
             const void* buf,
             size_t count)
-{
-    if (sizeof(SCSP_DATAINT) < sizeof(SCSP_SYSINT)) {
-        SCSP_DEBUG("SCSP_DATAINT should be not less than SCSP_SYSINT\n");
-        return -1;
-    }
-    
-    if ( ((SCSP_SYSINT)-1) > 0 ) {
-        SCSP_DEBUG("SCSP_SYSINT should be signed\n");
+{    
+    if ( ((SCSP_INT)-1) > 0 ) {
+        SCSP_DEBUG("SCSP_INT should be signed\n");
         return -1;
     }
         
@@ -66,7 +61,7 @@ SCSP_SYSINT scsp_parse(
     
     if (count < 1) return 0;
     
-    SCSP_SYSINT ret = -2;
+    SCSP_INT ret = -2;
     
     uint8_t*b = (uint8_t*)buf;
     
@@ -229,11 +224,11 @@ SCSP_SYSINT scsp_parse(
         ret = 1;
         push_to_stack = 'N';
     } else {
-        SCSP_DATAINT number;
+        SCSP_INT number;
         
-        if (   (add == 25 && sizeof(SCSP_SYSINT) < 2) ||
-               (add == 26 && sizeof(SCSP_SYSINT) < 4) ||
-               (add == 27 && sizeof(SCSP_SYSINT) < 8)) {
+        if (   (add == 25 && sizeof(SCSP_INT) < 2) ||
+               (add == 26 && sizeof(SCSP_INT) < 4) ||
+               (add == 27 && sizeof(SCSP_INT) < 8)) {
             SCSP_DEBUG("length overflow\n");
             return -1;
         }
@@ -247,7 +242,7 @@ SCSP_SYSINT scsp_parse(
             ret = 1+1;
         } else
         if (add==25) {
-            if ((b[1]&0x80) && sizeof(SCSP_SYSINT)<=2) {
+            if ((b[1]&0x80) && sizeof(SCSP_INT)<=2) {
                 SCSP_DEBUG("number overflow 16-bit\n"); 
                 return -1; 
             }
@@ -256,7 +251,7 @@ SCSP_SYSINT scsp_parse(
         } else
         if (add==26) {
 #if SCSP_ENABLE_32BIT
-            if ((b[1]&0x80) && sizeof(SCSP_SYSINT)<=4) {
+            if ((b[1]&0x80) && sizeof(SCSP_INT)<=4) {
                 SCSP_DEBUG("number overflow 32-bit\n"); 
                 return -1; 
             }
@@ -269,7 +264,7 @@ SCSP_SYSINT scsp_parse(
         } else
         if (add==27) {
 #if SCSP_ENABLE_64BIT
-            if ((b[1]&0x80) && sizeof(SCSP_SYSINT)<=8) {
+            if ((b[1]&0x80) && sizeof(SCSP_INT)<=8) {
                 SCSP_DEBUG("number overflow 64-bit\n"); 
                 return -1; 
             }
@@ -470,7 +465,7 @@ SCSP_SYSINT scsp_parse(
     return ret;
 }
 
-SCSP_SYSINT static scsp_closeelements(
+SCSP_INT static scsp_closeelements(
                 struct scsp_state* state, 
                 struct scsp_callbacks* callbacks,
                 SCSP_USERDATA userdata) {

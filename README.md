@@ -15,3 +15,9 @@ Concerns:
 * Unsigned numbers are represented as signed => can't handle access some extreme values
 * Not validating. Bytestrings and strings are handled similarly.
 * Strings and bytestrings are delivered in chunks which depend on how you push the data to the parser. String chunks may split UTF-8 characters in pieces.
+
+Examples:
+
+* cbor_to_jsonesque - read cbor from a file or stdin and dump something similar to JSON or CBOR diagnostic.
+* dump_scsp_events - dump each event in a separate line
+* simple_example

@@ -14,12 +14,8 @@
     #include <stdio.h>
 #endif
 
-#ifndef SCSP_SYSINT
-#define SCSP_SYSINT int64_t
-#endif
-
-#ifndef SCSP_DATAINT
-#define SCSP_DATAINT int64_t
+#ifndef SCSP_INT
+#define SCSP_INT int64_t
 #endif
 
 
@@ -72,39 +68,39 @@ types:
 
 struct scsp_stack_entry {
     char type;
-    SCSP_SYSINT remaining;
+    SCSP_INT remaining;
 };
 
 struct scsp_state {
-    SCSP_SYSINT cur_depth;
+    SCSP_INT cur_depth;
     struct scsp_stack_entry stack[SCSP_MAXDEPTH];
 };
 
 struct scsp_callbacks {
-    SCSP_SYSINT (*integer) (SCSP_USERDATA userdata, SCSP_DATAINT value);
+    SCSP_INT (*integer) (SCSP_USERDATA userdata, SCSP_INT value);
     
-    SCSP_SYSINT (*bytestring_open) (SCSP_USERDATA userdata, SCSP_SYSINT size_or_minus_one);
-    SCSP_SYSINT (*bytestring_chunk) (SCSP_USERDATA userdata, uint8_t* buf, size_t len);
-    SCSP_SYSINT (*bytestring_close) (SCSP_USERDATA userdata);
+    SCSP_INT (*bytestring_open) (SCSP_USERDATA userdata, SCSP_INT size_or_minus_one);
+    SCSP_INT (*bytestring_chunk) (SCSP_USERDATA userdata, uint8_t* buf, size_t len);
+    SCSP_INT (*bytestring_close) (SCSP_USERDATA userdata);
     
-    SCSP_SYSINT (*string_open)  (SCSP_USERDATA userdata, SCSP_SYSINT size_or_minus_one);
-    SCSP_SYSINT (*string_chunk) (SCSP_USERDATA userdata, uint8_t* buf, size_t len);
-    SCSP_SYSINT (*string_close) (SCSP_USERDATA userdata);
+    SCSP_INT (*string_open)  (SCSP_USERDATA userdata, SCSP_INT size_or_minus_one);
+    SCSP_INT (*string_chunk) (SCSP_USERDATA userdata, uint8_t* buf, size_t len);
+    SCSP_INT (*string_close) (SCSP_USERDATA userdata);
     
-    SCSP_SYSINT (*array_opened) (SCSP_USERDATA userdata, SCSP_SYSINT size_or_minus_one);
-    SCSP_SYSINT (*array_item)   (SCSP_USERDATA userdata);
-    SCSP_SYSINT (*array_closed) (SCSP_USERDATA userdata);
+    SCSP_INT (*array_opened) (SCSP_USERDATA userdata, SCSP_INT size_or_minus_one);
+    SCSP_INT (*array_item)   (SCSP_USERDATA userdata);
+    SCSP_INT (*array_closed) (SCSP_USERDATA userdata);
     
-    SCSP_SYSINT (*map_opened) (SCSP_USERDATA userdata, SCSP_SYSINT size_or_minus_one);
-    SCSP_SYSINT (*map_key) (SCSP_USERDATA userdata);
-    SCSP_SYSINT (*map_value) (SCSP_USERDATA userdata);
-    SCSP_SYSINT (*map_closed) (SCSP_USERDATA userdata);
+    SCSP_INT (*map_opened) (SCSP_USERDATA userdata, SCSP_INT size_or_minus_one);
+    SCSP_INT (*map_key) (SCSP_USERDATA userdata);
+    SCSP_INT (*map_value) (SCSP_USERDATA userdata);
+    SCSP_INT (*map_closed) (SCSP_USERDATA userdata);
     
     // 'T' - true, 'F' - false, 'N' - null, 'U' - undefined
-    SCSP_SYSINT (*simple) (SCSP_USERDATA userdata, char value);
-    SCSP_SYSINT (*simple_other) (SCSP_USERDATA userdata, SCSP_DATAINT value);
+    SCSP_INT (*simple) (SCSP_USERDATA userdata, char value);
+    SCSP_INT (*simple_other) (SCSP_USERDATA userdata, SCSP_INT value);
 #if SCSP_ENABLE_FLOAT
-    SCSP_SYSINT (*noninteger) (SCSP_USERDATA userdata, double value);
+    SCSP_INT (*noninteger) (SCSP_USERDATA userdata, double value);
 #endif
 };
 
@@ -113,7 +109,7 @@ struct scsp_callbacks {
  * Returns -1 on error, including on error returned from callbacks.
  * Does not set errno.
  */
-SCSP_SYSINT SCSP_EXPORT scsp_parse(
+SCSP_INT SCSP_EXPORT scsp_parse(
             struct scsp_state* state, 
             struct scsp_callbacks* callbacks,
             SCSP_USERDATA userdata,
