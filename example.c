@@ -5,19 +5,82 @@ SCSP_SYSINT q_array_opened (SCSP_USERDATA userdata, SCSP_SYSINT size_or_minus_on
     printf("[");
     return 0;
 }
+SCSP_SYSINT q_array_item (SCSP_USERDATA userdata) {
+    printf(",");
+    return 0;
+}
 SCSP_SYSINT q_array_closed (SCSP_USERDATA userdata) {
-    printf("],");
+    printf("]");
+    return 0;
+}
+SCSP_SYSINT q_map_opened (SCSP_USERDATA userdata, SCSP_SYSINT size_or_minus_one) {
+    printf("{");
+    return 0;
+}
+SCSP_SYSINT q_map_closed (SCSP_USERDATA userdata) {
+    printf("},");
+    return 0;
+}
+SCSP_SYSINT q_map_key (SCSP_USERDATA userdata) {
+    printf(", ");
+    return 0;
+}
+SCSP_SYSINT q_map_value (SCSP_USERDATA userdata) {
+    printf(": ");
     return 0;
 }
 SCSP_SYSINT q_integer (SCSP_USERDATA userdata, SCSP_DATAINT value) {
-    printf("%lld, ", value);
+    printf("%lld", value);
+    return 0;
+}
+SCSP_SYSINT q_bytestring_open (SCSP_USERDATA userdata, SCSP_SYSINT size_or_minus_one) {
+    printf("'");
+    return 0;
+}
+SCSP_SYSINT q_bytestring_chunk (SCSP_USERDATA userdata, uint8_t* buf, size_t len) {
+    int i;
+    for (i=0; i<len; ++i) {
+        printf("%02X", (int)buf[i]);
+    }
+    return 0;
+}
+SCSP_SYSINT q_bytestring_close (SCSP_USERDATA userdata) {
+    printf("'");
+    return 0;
+}
+SCSP_SYSINT q_string_open (SCSP_USERDATA userdata, SCSP_SYSINT size_or_minus_one) {
+    printf("\"");
+    return 0;
+}
+SCSP_SYSINT q_string_chunk (SCSP_USERDATA userdata, uint8_t* buf, size_t len) {
+    fwrite(buf, 1, len, stdout);
+    return 0;
+}
+SCSP_SYSINT q_string_close (SCSP_USERDATA userdata) {
+    printf("\"");
+    return 0;
+}
+SCSP_SYSINT q_simple (SCSP_USERDATA userdata, char value) {
+    printf("%c", value);
     return 0;
 }
 
 struct scsp_callbacks sc = {
+    &q_integer,
+    &q_bytestring_open,
+    &q_bytestring_chunk,
+    &q_bytestring_close,
+    &q_string_open,
+    &q_string_chunk,
+    &q_string_close,
     &q_array_opened,
+    &q_array_item,
     &q_array_closed,
-    &q_integer
+    &q_map_opened,
+    &q_map_key,
+    &q_map_value,
+    &q_map_closed,
+    &q_simple
 };
 
 

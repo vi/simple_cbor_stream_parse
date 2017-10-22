@@ -32,6 +32,18 @@
 #define SCSP_EXPORT
 #endif
 
+#ifndef SCSP_ENABLE_32BIT
+#define SCSP_ENABLE_32BIT 1
+#endif
+
+#ifndef SCSP_ENABLE_64BIT
+#define SCSP_ENABLE_64BIT 1
+#endif
+
+#ifndef SCSP_ENABLE_FLOAT
+#define SCSP_ENABLE_FLOAT 1
+#endif
+
 /* 
 types:
 
@@ -62,9 +74,26 @@ struct scsp_state {
 };
 
 struct scsp_callbacks {
-    SCSP_SYSINT (*array_opened) (SCSP_USERDATA userdata, SCSP_SYSINT size_or_minus_one);
-    SCSP_SYSINT (*array_closed) (SCSP_USERDATA userdata);
     SCSP_SYSINT (*integer) (SCSP_USERDATA userdata, SCSP_DATAINT value);
+    
+    SCSP_SYSINT (*bytestring_open) (SCSP_USERDATA userdata, SCSP_SYSINT size_or_minus_one);
+    SCSP_SYSINT (*bytestring_chunk) (SCSP_USERDATA userdata, uint8_t* buf, size_t len);
+    SCSP_SYSINT (*bytestring_close) (SCSP_USERDATA userdata);
+    
+    SCSP_SYSINT (*string_open)  (SCSP_USERDATA userdata, SCSP_SYSINT size_or_minus_one);
+    SCSP_SYSINT (*string_chunk) (SCSP_USERDATA userdata, uint8_t* buf, size_t len);
+    SCSP_SYSINT (*string_close) (SCSP_USERDATA userdata);
+    
+    SCSP_SYSINT (*array_opened) (SCSP_USERDATA userdata, SCSP_SYSINT size_or_minus_one);
+    SCSP_SYSINT (*array_item)   (SCSP_USERDATA userdata);
+    SCSP_SYSINT (*array_closed) (SCSP_USERDATA userdata);
+    
+    SCSP_SYSINT (*map_opened) (SCSP_USERDATA userdata, SCSP_SYSINT size_or_minus_one);
+    SCSP_SYSINT (*map_key) (SCSP_USERDATA userdata);
+    SCSP_SYSINT (*map_value) (SCSP_USERDATA userdata);
+    SCSP_SYSINT (*map_closed) (SCSP_USERDATA userdata);
+    
+    SCSP_SYSINT (*simple) (SCSP_USERDATA userdata, char value);
 };
 
 /*
