@@ -16,12 +16,14 @@ Concerns/Notes:
 * Not validating. Bytestrings and strings are handled similarly.
 * Strings and bytestrings are delivered in chunks which depend on how you push the data to the parser. String chunks may split UTF-8 characters in pieces.
 * There is no CBOR generator here, only parser
+* Tags are ignored
+* Not entire "Appenfix A" testsuite passes due to forced signed numbers
 
 Examples:
 
 * cbor_to_jsonesque - read cbor from a file or stdin and dump something similar to JSON or CBOR diagnostic.
 * dump_scsp_events - dump each event in a separate line
-* simple_example
+* simple_example - parse from memory and assert it works
 
 Configurable parameters:
 
