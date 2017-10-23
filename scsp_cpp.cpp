@@ -142,7 +142,7 @@ bool SCSP_EXPORT parse_from_istream(
         while(write_cursor < len) {
             int ret2 = scsp_parse_lowlevel(&ss, &tocpp_callbacks, (void*)&callbacks, buf+write_cursor, len-write_cursor);
             if (ret2 == -1) {
-                return -1;
+                return false;
             }
             if (ret2 == 0) {
                 memmove(buf, buf+write_cursor, len-write_cursor);
@@ -153,7 +153,6 @@ bool SCSP_EXPORT parse_from_istream(
         }
         //fflush(stdout);
     }
-    return read_cursor;
 }
 
 SCSP_INT SCSP_EXPORT parse_from_memory(
