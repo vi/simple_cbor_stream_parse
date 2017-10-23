@@ -10,6 +10,7 @@ License = MIT or Apache 2.0
 * Should work with 32-bit or 16-bit registers. Float support is also opt-out.
 * No buffering at all in low-level mode. You are in charge for buffering. Parse function expects [write(2)](http://man7.org/linux/man-pages/man2/write.2.html) semantics and process less bytes than you have pushed into it (including 0 bytes if there is not enough data).
 * Helper function to parse from a FD (with buffering) or from memory.
+* There is C++ binding. istream version has unavoidable buffering, low-level version requires allocation.
 
 ## Concerns/Notes:
 
@@ -25,6 +26,7 @@ License = MIT or Apache 2.0
 * cbor_to_jsonesque - read cbor from a file or stdin and dump something similar to JSON or CBOR diagnostic.
 * dump_scsp_events - dump each event in a separate line
 * [simple_example](/simple_example.c) - parse from memory and assert it works
+* [extract_strings](/extract_strings.c) - a C++ example. Prints all encountered strings.
 
 
 ## Configurable parameters
