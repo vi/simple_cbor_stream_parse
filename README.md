@@ -45,6 +45,7 @@ License = MIT or Apache 2.0
 * dump_scsp_events - dump each event in a separate line
 * [simple_example](/simple_example.c) - parse from memory and assert it works
 * [extract_strings](/extract_strings.cpp) - a C++ example. Prints all encountered strings.
+* roundtrip - a C++ example of copying a cbor file. Resulting CBOR is uncanonical.
 
 
 ## Configurable parameters
