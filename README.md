@@ -21,6 +21,24 @@ License = MIT or Apache 2.0
 * There is no CBOR generator here, only parser
 * Not entire "Appenfix A" testsuite passes due to forced signed numbers
 
+## How to use
+
+### C
+
+1. Copy source files (`scsp.c` and `scsp.h`) into your project
+2. Define your callback functions (copy from some example). Note that strings may arrive in arbitrary chunks.
+3. Fill in `scsp_callbacks` structure (copy from some example)
+4. If you need to parse from entire file or from memory buffer, use `scsp_parse_from_fd` or `scsp_parse_from_memory`.
+5. If you need flexible parsing, create `scsp_state` structure, initialize it with zeroes and call `scsp_parse_lowlevel` in a loop. It will consume data bit by bit. One call corresponds to a few callbacks.
+
+### C++
+
+1. Copy source files `scsp.c`, `scsp_cpp.cpp`, `scsp.h` and `scsp_cpp.hpp` into your project
+2. Inherit from scsp::Callbacks interface or scsp::CallbacksEmpty class
+3. Override events you need to listen to
+4. For simple mode, use `parse_from_istream` / `parse_from_memory` / `parse_from_fd` functions. Note that istream version does buffering inside.
+5. For flexible mode, create scsp::State object with `new_state`, use `parse_lowlevel` (see fifth point in "C" version of "How to use") in a loop, then delete state object with delete_state.
+
 ## Examples
 
 * cbor_to_jsonesque - read cbor from a file or stdin and dump something similar to JSON or CBOR diagnostic.
