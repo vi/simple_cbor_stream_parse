@@ -114,12 +114,12 @@ SCSP_INT scsp_parse_lowlevel(
                 struct scsp_stack_entry* se2 = &state->stack[state->cur_depth - 1];
             
                 if (se2->type == 'B' || se2->type == 'S') {
-                    // inhibit close events in this case
+                    // inhibit closed events in this case
                 } else {
                     if (se1->type == 's') {
-                        CALLBACK0(string_close);
+                        CALLBACK0(string_closed);
                     } else {
-                        CALLBACK0(bytestring_close);
+                        CALLBACK0(bytestring_closed);
                     }
                 }
                 
@@ -128,9 +128,9 @@ SCSP_INT scsp_parse_lowlevel(
                 }
             } else {
                 if (se1->type == 's') {
-                    CALLBACK0(string_close);
+                    CALLBACK0(string_closed);
                 } else {
-                    CALLBACK0(bytestring_close);
+                    CALLBACK0(bytestring_closed);
                 }
             }
         }
@@ -222,13 +222,13 @@ SCSP_INT scsp_parse_lowlevel(
     }
    
     if (t == 'B') {
-        CALLBACK(bytestring_open, -1);
+        CALLBACK(bytestring_opened, -1);
         ret = 1;
         push_to_stack = 'Y';
         se->remaining = -1;
     } else
     if (t == 'S') {
-        CALLBACK(string_open, -1);
+        CALLBACK(string_opened, -1);
         ret = 1;
         push_to_stack = 'Y';
         se->remaining = -1;
@@ -324,12 +324,12 @@ SCSP_INT scsp_parse_lowlevel(
             case 'b': {
                 char inhibit_callback = se1 && se1->type == 'B';
                 if (!inhibit_callback) {
-                    CALLBACK(bytestring_open, number);
+                    CALLBACK(bytestring_opened, number);
                 }
                 if (number == 0) {
                     push_to_stack = 'N';
                     if (!inhibit_callback) {
-                        CALLBACK0(bytestring_close);
+                        CALLBACK0(bytestring_closed);
                     }
                 } else {
                     push_to_stack = 'Y';
@@ -340,12 +340,12 @@ SCSP_INT scsp_parse_lowlevel(
             case 's': {
                 char inhibit_callback = se1 && se1->type == 'S';
                 if (!inhibit_callback) {
-                    CALLBACK(string_open, number);
+                    CALLBACK(string_opened, number);
                 }
                 if (number == 0) {
                     push_to_stack = 'N';
                     if (!inhibit_callback) {
-                        CALLBACK0(string_close);
+                        CALLBACK0(string_closed);
                     }
                 } else {
                     push_to_stack = 'Y';
@@ -518,10 +518,10 @@ SCSP_INT static scsp_closeelements(
                         CALLBACK0(map_closed);
                         break;
                     case 'B':
-                        CALLBACK0(bytestring_close);
+                        CALLBACK0(bytestring_closed);
                         break;
                     case 'S':
-                        CALLBACK0(string_close);
+                        CALLBACK0(string_closed);
                         break;
                     case 'b':
                     case 's':

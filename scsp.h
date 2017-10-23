@@ -65,13 +65,13 @@ struct scsp_state {
 struct scsp_callbacks {
     SCSP_INT (*integer) (SCSP_USERDATA userdata, SCSP_INT value);
     
-    SCSP_INT (*bytestring_open) (SCSP_USERDATA userdata, SCSP_INT size_or_minus_one);
+    SCSP_INT (*bytestring_opened)(SCSP_USERDATA userdata, SCSP_INT size_or_minus_one);
     SCSP_INT (*bytestring_chunk) (SCSP_USERDATA userdata, const uint8_t* buf, size_t len);
-    SCSP_INT (*bytestring_close) (SCSP_USERDATA userdata);
+    SCSP_INT (*bytestring_closed) (SCSP_USERDATA userdata);
     
-    SCSP_INT (*string_open)  (SCSP_USERDATA userdata, SCSP_INT size_or_minus_one);
+    SCSP_INT (*string_opened) (SCSP_USERDATA userdata, SCSP_INT size_or_minus_one);
     SCSP_INT (*string_chunk) (SCSP_USERDATA userdata, const uint8_t* buf, size_t len);
-    SCSP_INT (*string_close) (SCSP_USERDATA userdata);
+    SCSP_INT (*string_closed) (SCSP_USERDATA userdata);
     
     SCSP_INT (*array_opened) (SCSP_USERDATA userdata, SCSP_INT size_or_minus_one);
     SCSP_INT (*array_item)   (SCSP_USERDATA userdata);

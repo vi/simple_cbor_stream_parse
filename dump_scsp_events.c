@@ -10,8 +10,8 @@ SCSP_INT q_integer (SCSP_USERDATA userdata, SCSP_INT value) {
     printf("integer(%ld)\n", value); fflush(stdout);
     return 0;
 }
-SCSP_INT q_bytestring_open (SCSP_USERDATA userdata, SCSP_INT size_or_minus_one) {
-    printf("bytestring_open(%ld)\n", size_or_minus_one); fflush(stdout);
+SCSP_INT q_bytestring_opened(SCSP_USERDATA userdata, SCSP_INT size_or_minus_one) {
+    printf("bytestring_opened(%ld)\n", size_or_minus_one); fflush(stdout);
     return 0;
 }
 SCSP_INT q_bytestring_chunk (SCSP_USERDATA userdata, const uint8_t* buf, size_t len) {
@@ -24,12 +24,12 @@ SCSP_INT q_bytestring_chunk (SCSP_USERDATA userdata, const uint8_t* buf, size_t 
     fflush(stdout);
     return 0;
 }
-SCSP_INT q_bytestring_close (SCSP_USERDATA userdata) {
-    printf("bytestring_close\n"); fflush(stdout);
+SCSP_INT q_bytestring_closed(SCSP_USERDATA userdata) {
+    printf("bytestring_closed\n"); fflush(stdout);
     return 0;
 }
-SCSP_INT q_string_open (SCSP_USERDATA userdata, SCSP_INT size_or_minus_one) {
-    printf("string_open(%ld)\n", size_or_minus_one); fflush(stdout);
+SCSP_INT q_string_opened(SCSP_USERDATA userdata, SCSP_INT size_or_minus_one) {
+    printf("string_opened(%ld)\n", size_or_minus_one); fflush(stdout);
     return 0;
 }
 SCSP_INT q_string_chunk (SCSP_USERDATA userdata, const uint8_t* buf, size_t len) {
@@ -42,8 +42,8 @@ SCSP_INT q_string_chunk (SCSP_USERDATA userdata, const uint8_t* buf, size_t len)
     fflush(stdout);
     return 0;
 }
-SCSP_INT q_string_close (SCSP_USERDATA userdata) {
-    printf("string_close\n"); fflush(stdout);
+SCSP_INT q_string_closed(SCSP_USERDATA userdata) {
+    printf("string_closed\n"); fflush(stdout);
     return 0;
 }
 SCSP_INT q_array_opened (SCSP_USERDATA userdata, SCSP_INT size_or_minus_one) {
@@ -93,12 +93,12 @@ SCSP_INT q_noninteger (SCSP_USERDATA userdata, double value) {
 
 struct scsp_callbacks q_callbacks = {
     &q_integer,
-    &q_bytestring_open,
+    &q_bytestring_opened,
     &q_bytestring_chunk,
-    &q_bytestring_close,
-    &q_string_open,
+    &q_bytestring_closed,
+    &q_string_opened,
     &q_string_chunk,
-    &q_string_close,
+    &q_string_closed,
     &q_array_opened,
     &q_array_item,
     &q_array_closed,
