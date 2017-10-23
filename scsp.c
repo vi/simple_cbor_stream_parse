@@ -268,8 +268,12 @@ SCSP_INT scsp_parse_lowlevel(
         } else
         if (add==25) {
             if ((b[1]&0x80) && sizeof(SCSP_INT)<=2) {
-                SCSP_DEBUG("number overflow 16-bit\n"); 
-                return -1; 
+                if (t != '.' && t != '_') {
+                    SCSP_DEBUG("number overflow 16-bit\n"); 
+                    return -1;
+                } else {
+                    // ignore
+                }
             }
             number = (b[1] << 8) | b[2];
             ret = 1+2;
@@ -277,8 +281,12 @@ SCSP_INT scsp_parse_lowlevel(
         if (add==26) {
 #if SCSP_ENABLE_32BIT
             if ((b[1]&0x80) && sizeof(SCSP_INT)<=4) {
-                SCSP_DEBUG("number overflow 32-bit\n"); 
-                return -1; 
+                if (t != '.' && t != '_') {
+                    SCSP_DEBUG("number overflow 32-bit\n"); 
+                    return -1; 
+                } else {
+                    // ignore broken number for floats and tags
+                }
             }
             number = (((b[1] << 8) | b[2]) << 16)   |   ((b[3] << 8) | b[4]);
             ret = 1+4;
@@ -290,8 +298,12 @@ SCSP_INT scsp_parse_lowlevel(
         if (add==27) {
 #if SCSP_ENABLE_64BIT
             if ((b[1]&0x80) && sizeof(SCSP_INT)<=8) {
-                SCSP_DEBUG("number overflow 64-bit\n"); 
-                return -1; 
+                if (t != '.' && t != '_') {
+                    SCSP_DEBUG("number overflow 64-bit\n"); 
+                    return -1; 
+                } else {
+                    // ignore broken number for doubles and tags
+                }
             }
             number =  0;
             
