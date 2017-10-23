@@ -34,17 +34,17 @@ License = MIT or Apache 2.0
 ### C++
 
 1. Copy source files `scsp.c`, `scsp_cpp.cpp`, `scsp.h` and `scsp_cpp.hpp` into your project
-2. Inherit from scsp::Callbacks interface or scsp::CallbacksEmpty class
+2. Inherit from `scsp::Callbacks` interface or `scsp::CallbacksEmpty` class
 3. Override events you need to listen to
 4. For simple mode, use `parse_from_istream` / `parse_from_memory` / `parse_from_fd` functions. Note that istream version does buffering inside.
-5. For flexible mode, create scsp::State object with `new_state`, use `parse_lowlevel` (see fifth point in "C" version of "How to use") in a loop, then delete state object with delete_state.
+5. For flexible mode, create `scsp::State` object with `new_state`, use `parse_lowlevel` (see fifth point in "C" version of "How to use") in a loop, then delete state object with delete_state.
 
 ## Examples
 
 * cbor_to_jsonesque - read cbor from a file or stdin and dump something similar to JSON or CBOR diagnostic.
 * dump_scsp_events - dump each event in a separate line
 * [simple_example](/simple_example.c) - parse from memory and assert it works
-* [extract_strings](/extract_strings.c) - a C++ example. Prints all encountered strings.
+* [extract_strings](/extract_strings.cpp) - a C++ example. Prints all encountered strings.
 
 
 ## Configurable parameters
