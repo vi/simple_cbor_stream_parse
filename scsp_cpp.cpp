@@ -107,6 +107,46 @@ static struct scsp_callbacks tocpp_callbacks = {
 #endif
 };
 
+SCSP_INT SCSP_EXPORT parse_from_memory(
+            const void *buffer,
+            size_t count,
+            class Callbacks& callbacks)
+{
+    return scsp_parse_from_memory(buffer, count, &tocpp_callbacks, (void*)&callbacks);
+}
+
+SCSP_INT SCSP_EXPORT parse_from_fd(
+            int fd, 
+            class Callbacks& callbacks)
+{
+    return scsp_parse_from_fd(fd, &tocpp_callbacks, (void*)&callbacks);
+}
+
+class State {
+    public: 
+    struct scsp_state ss;
+};
+
+class State* new_state() { 
+    class State* st = new State(); 
+    st->ss.cur_depth = 0;
+    return st;
+}
+void delete_state(class  State* state) {
+    delete state;
+}
+
+SCSP_INT SCSP_EXPORT parse_lowlevel(
+            class State& state,
+            class Callbacks& callbacks,
+            const void* buf,
+            size_t count)
+{
+    return scsp_parse_lowlevel(&state.ss, &tocpp_callbacks, (void*)&callbacks, buf, count);
+}
+
+
+#if SCSP_ENABLE_IOSTREAM
 
 bool SCSP_EXPORT parse_from_istream(
             std::istream& is,
@@ -155,42 +195,106 @@ bool SCSP_EXPORT parse_from_istream(
     }
 }
 
-SCSP_INT SCSP_EXPORT parse_from_memory(
-            const void *buffer,
-            size_t count,
-            class Callbacks& callbacks)
-{
-    return scsp_parse_from_memory(buffer, count, &tocpp_callbacks, (void*)&callbacks);
+void Generator::writething(uint8_t maj, uint64_t value) {
+    if (value < 24) {
+        uint8_t t = value | maj;
+        o.write((char*)&t, 1);
+    } else
+    if (value < 0x100) {
+        uint8_t q = value;
+        uint8_t t = 0x18 | maj;
+        o.write((char*)&t, 1);
+        o.write((char*)&q, 1);
+    } else
+    if (value < 0x10000) {
+        uint8_t q[2];
+        q[0] = (value & 0xFF00) >> 8;
+        q[1] = (value & 0x00FF) >> 0;
+        uint8_t t = 0x19 | maj;
+        o.write((char*)&t, 1);
+        o.write((char*)&q, 2);
+    } else
+    if (value < 0x100000000LL) {
+        uint8_t q[4];
+        q[0] = (value & 0xFF000000UL) >> 24;
+        q[1] = (value & 0x00FF0000UL) >> 16;
+        q[2] = (value & 0x0000FF00UL) >> 8;
+        q[3] = (value & 0x000000FFUL) >> 0;
+        uint8_t t = 0x1A | maj;
+        o.write((char*)&t, 1);
+        o.write((char*)&q, 4);
+    } else {
+        uint8_t t = 0x1B | maj;
+        o.write((char*)&t, 1);
+        int i;
+        for (i=0; i<8; ++i) {
+            uint8_t q = (value&0xFF00000000000000ULL) >> 56;
+            value<<=8;
+            o.write((char*)&q, 1);
+        }
+    }
 }
 
-SCSP_INT SCSP_EXPORT parse_from_fd(
-            int fd, 
-            class Callbacks& callbacks)
-{
-    return scsp_parse_from_fd(fd, &tocpp_callbacks, (void*)&callbacks);
+void Generator::integer(SCSP_INT value) {
+    if (value >= 0) {
+        writething(0x00, value);
+    } else {
+        writething(0x20, (-value) - 1);
+    }
 }
 
-class State {
-    public: 
-    struct scsp_state ss;
-};
+void Generator::bytestring_opened(SCSP_INT size_or_minus_one) { o.write("\x5F", 1);}
+void Generator::bytestring_chunk(const uint8_t* buf, size_t len) {
+    writething(0x40, len);
+    o.write((const char*)buf, len);
+}
+void Generator::bytestring_closed() { o.write("\xFF", 1); }
 
-class State* new_state() { 
-    class State* st = new State(); 
-    st->ss.cur_depth = 0;
-    return st;
+void Generator::string_opened(SCSP_INT size_or_minus_one) { o.write("\x7F", 1); }
+void Generator::string_chunk(const uint8_t* buf, size_t len) {
+    writething(0x60, len);
+    // XXX multi-byte things may get split between chunks here
+    o.write((const char*)buf, len);
 }
-void delete_state(class  State* state) {
-    delete state;
-}
+void Generator::string_closed() { o.write("\xFF", 1); }
 
-SCSP_INT SCSP_EXPORT parse_lowlevel(
-            class State& state,
-            class Callbacks& callbacks,
-            const void* buf,
-            size_t count)
-{
-    return scsp_parse_lowlevel(&state.ss, &tocpp_callbacks, (void*)&callbacks, buf, count);
+void Generator::array_opened(SCSP_INT size_or_minus_one){ o.write("\x9F", 1); }
+void Generator::array_item(){}
+void Generator::array_closed(){ o.write("\xFF", 1); }
+
+void Generator::map_opened(SCSP_INT size_or_minus_one){ o.write("\xBF", 1); }
+void Generator::map_key(){}
+void Generator::map_value(){}
+void Generator::map_closed(){ o.write("\xFF", 1); }
+
+void Generator::simple (char value){ 
+    switch (value) {
+        case 'F' : o.write("\xF4", 1); break;
+        case 'T' : o.write("\xF5", 1); break;
+        case 'N' : o.write("\xF6", 1); break;
+        case 'U' : o.write("\xF7", 1); break;
+        default:   o.write("\xF7", 1); break;
+    }
 }
+void Generator::simple_other (SCSP_INT value){
+    writething(0xE0, value);
+}
+void Generator::tag (SCSP_INT value){
+    writething(0xC0, value);
+}
+#if SCSP_ENABLE_FLOAT
+void Generator::noninteger (double value){
+    uint64_t v = *reinterpret_cast<const uint64_t*>(&value);
+    o.write("\xFB", 1);
+    int i;
+    for (i=0; i<8; ++i) {
+        uint8_t q = (v&0xFF00000000000000ULL) >> 56;
+        v<<=8;
+        o.write((char*)&q, 1);
+    }
+}
+#endif
+
+#endif // SCSP_ENABLE_IOSTREAM
 
 } // namespace scsp

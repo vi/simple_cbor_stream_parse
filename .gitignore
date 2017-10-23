@@ -4,3 +4,4 @@ simple_example
 extract_strings
 *.o
 *.cbor
+test/

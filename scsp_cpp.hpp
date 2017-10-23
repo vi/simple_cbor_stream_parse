@@ -22,12 +22,12 @@
 #define SCSP_EXPORT
 #endif
 
-#ifndef SCSP_ENABLE_ISTREAM
-#define SCSP_ENABLE_ISTREAM 1
+#ifndef SCSP_ENABLE_IOSTREAM
+#define SCSP_ENABLE_IOSTREAM 1
 #endif
 
 
-#if SCSP_ENABLE_ISTREAM
+#if SCSP_ENABLE_IOSTREAM
     #include <iosfwd>
 #endif
 
@@ -37,7 +37,7 @@ namespace scsp {
 class Callbacks;
 
 
-#if SCSP_ENABLE_ISTREAM
+#if SCSP_ENABLE_IOSTREAM
 /** true means success */
 bool SCSP_EXPORT parse_from_istream(
             std::istream& is,
@@ -61,6 +61,8 @@ SCSP_INT SCSP_EXPORT parse_lowlevel(
             class Callbacks& callbacks,
             const void* buf,
             size_t count);
+
+
 
 
 class  Callbacks {
@@ -114,7 +116,6 @@ class  CallbacksEmpty : public Callbacks {
     virtual void map_value(){}
     virtual void map_closed(){}
     
-    // 'T' - true, 'F' - false, 'N' - null, 'U' - undefined
     virtual void simple (char value){}
     virtual void simple_other (SCSP_INT value){}
     virtual void tag (SCSP_INT value){}
@@ -128,6 +129,48 @@ class State;
 class State* new_state();
 void delete_state(class  State* state);
 
+
+#if SCSP_ENABLE_IOSTREAM
+
+/* Note: all strings, bytestrings, arrays and maps are streamed */
+/* In contrary to the RFC, string chunks may split UTF-8 character's bytes apart */
+class Generator : public Callbacks {
+    public: 
+    Generator(std::ostream &os) : o(os) {}
+    
+    private:
+    std::ostream& o;
+    
+    void writething(uint8_t maj, uint64_t thing);
+    
+    virtual void integer(SCSP_INT value) ;
+    
+    virtual void bytestring_opened(SCSP_INT size_or_minus_one) ;
+    virtual void bytestring_chunk(const uint8_t* buf, size_t len) ;
+    virtual void bytestring_closed() ;
+    
+    virtual void string_opened(SCSP_INT size_or_minus_one) ;
+    virtual void string_chunk(const uint8_t* buf, size_t len) ;
+    virtual void string_closed() ;
+    
+    virtual void array_opened(SCSP_INT size_or_minus_one);
+    virtual void array_item();
+    virtual void array_closed();
+    
+    virtual void map_opened(SCSP_INT size_or_minus_one);
+    virtual void map_key();
+    virtual void map_value();
+    virtual void map_closed();
+    
+    virtual void simple (char value);
+    virtual void simple_other (SCSP_INT value);
+    virtual void tag (SCSP_INT value);
+#if SCSP_ENABLE_FLOAT
+    virtual void noninteger (double value);
+#endif
+};
+
+#endif
 
 } // namespace scsp
 

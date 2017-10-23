@@ -59,6 +59,7 @@ License = MIT or Apache 2.0
 * SCSP_ENABLE_FLOAT
 * SCSP_ENABLE_32BIT
 * SCSP_ENABLE_64BIT
+* SCSP_ENABLE_IOSTREAM - Enable additional features in C++ binding
 
 ## Example of an scsp event stream
 
